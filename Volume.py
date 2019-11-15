@@ -5,7 +5,7 @@ import vtk
 
 #Loader for our structured dataset
 imageReader = vtk.vtkStructuredPointsReader()
-imageReader.SetFileName("./data/tooth.vtk")
+imageReader.SetFileName("/Users/kylestrougo/Documents/GitHub/assignment-4-kylestrougo/data/foot.vtk")
 imageReader.Update()
 
 #Print dimensions and range of the 3d image
@@ -30,8 +30,38 @@ outlineActor.GetProperty().SetLineWidth(2.0);
 plane = vtk.vtkPlane();
 
 
-#TODO Part 1 and Part 2
+#--------
 
+# added function for color transfer
+color_transfer = vtk.vtkColorTransferFunction()
+color_transfer.AddRGBPoint(0, 0.520, 0.0, 0.0)
+color_transfer.AddRGBPoint(120, 1.0, 0.68, 0.30)
+color_transfer.AddRGBPoint(255, 1.0, 1.0, 1.0)
+
+
+# added function for piecewise opacity
+opacity = vtk.vtkPiecewiseFunction()
+opacity.AddPoint(0,0)
+opacity.AddPoint(12.9,0)
+opacity.AddPoint(38.89,0.05687)
+opacity.AddPoint(255.0,1.0)
+
+# call to functions
+volume_transfer = vtk.vtkVolumeProperty()
+volume_transfer.SetColor(color_transfer)
+volume_transfer.SetScalarOpacity(opacity)
+volume_transfer.ShadeOn()
+
+# mapper
+ray_map = vtk.vtkGPUVolumeRayCastMapper()
+ray_map.SetBlendModeToComposite()
+ray_map.SetInputConnection(imageReader.GetOutputPort())
+
+# set mapper and property
+volume = vtk.vtkVolume()
+volume.SetMapper(ray_map)
+volume.SetProperty(volume_transfer)
+#-----------
 
 #A renderer that renders our geometry into the render window
 renderer = vtk.vtkRenderer()
@@ -42,6 +72,8 @@ renderer.SetViewport(0,0,1,1);
 renderer.AddActor( outlineActor);
 #TODO add volume
 
+#--
+renderer.AddActor(volume)
 
 #The render window
 renwin = vtk.vtkRenderWindow()
@@ -63,8 +95,28 @@ def planeCallback(object, event):
   global plane
   object.GetRepresentation().GetPlane(plane)
 
-#TODO Part 2
+#----------
 
+volume.GetMapper().AddClippingPlane(plane)
+
+PlaneRep = vtk.vtkImplicitPlaneRepresentation()
+PlaneRep.SetPlaceFactor(1.25)
+PlaneRep.PlaceWidget(outlineActor.GetBounds())
+
+PlaneRep.SetNormal(plane.GetNormal())
+
+#-----------
+
+plane_Wid = vtk.vtkImplicitPlaneWidget2()
+
+plane_Wid.SetInteractor(interactor)
+plane_Wid.SetRepresentation(PlaneRep)
+
+plane_Wid.AddObserver("InteractionEvent", planeCallback)
+
+plane_Wid.On()
+
+#----------
 
 interactor.Initialize()
 interactor.Start()
