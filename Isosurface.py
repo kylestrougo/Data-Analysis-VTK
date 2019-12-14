@@ -129,7 +129,6 @@ renderer.AddActor(iso_actor)
 renderer.AddActor(iso_txt)
 renderer.AddActor(color_bar)
 
-#TODO: You'll probably need to add additional actors to the scene
 
 #The render window
 renwin = vtk.vtkRenderWindow()
